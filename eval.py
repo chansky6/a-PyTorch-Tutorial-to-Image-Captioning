@@ -142,9 +142,9 @@ def evaluate(beam_size):
             if k == 0:
                 break
             seqs = seqs[incomplete_inds]
-            h = h[prev_word_inds[incomplete_inds]]
-            c = c[prev_word_inds[incomplete_inds]]
-            encoder_out = encoder_out[prev_word_inds[incomplete_inds]]
+            h = h[prev_word_inds.long()[incomplete_inds]]
+            c = c[prev_word_inds.long()[incomplete_inds]]
+            encoder_out = encoder_out[prev_word_inds.long()[incomplete_inds]]
             top_k_scores = top_k_scores[incomplete_inds].unsqueeze(1)
             k_prev_words = next_word_inds[incomplete_inds].unsqueeze(1)
 
