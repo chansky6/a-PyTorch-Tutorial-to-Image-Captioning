@@ -154,6 +154,7 @@ def evaluate(beam_size):
                 long_pred = True
                 break
             step += 1
+        wrong = 0
         # According to https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning/issues/18#issuecomment-441158662
         if long_pred is not True:
             i = complete_seqs_scores.index(max(complete_seqs_scores))
