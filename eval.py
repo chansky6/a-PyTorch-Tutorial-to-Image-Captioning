@@ -166,8 +166,8 @@ def evaluate(beam_size):
             sentence = sentence + ['<end>']
             wrong += 1
 
-        i = complete_seqs_scores.index(max(complete_seqs_scores))
-        seq = complete_seqs[i]
+        # i = complete_seqs_scores.index(max(complete_seqs_scores))
+        # seq = complete_seqs[i]
 
         # References
         img_caps = allcaps[0].tolist()
