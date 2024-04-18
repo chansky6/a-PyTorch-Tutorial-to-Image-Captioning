@@ -153,17 +153,17 @@ def evaluate(beam_size):
                 smth_wrong = True
                 break
             step += 1
-            # According to https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning/issues/18#issuecomment-441158662
-            if smth_wrong is not True:
-                i = complete_seqs_scores.index(max(complete_seqs_scores))
-                seq = complete_seqs[i]
-                sentence = [rev_word_map[seq[i]] for i in range(len(seq))]
-            else:
-                seq = seqs[0][:20]
-                sentence = [rev_word_map[seq[i].item()] for i in range(len(seq))]
-                sentence = sentence + ['<end>']
-                wrong += 1
-            return sentence, wrong
+        # According to https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning/issues/18#issuecomment-441158662
+        if smth_wrong is not True:
+            i = complete_seqs_scores.index(max(complete_seqs_scores))
+            seq = complete_seqs[i]
+            sentence = [rev_word_map[seq[i]] for i in range(len(seq))]
+        else:
+            seq = seqs[0][:20]
+            sentence = [rev_word_map[seq[i].item()] for i in range(len(seq))]
+            sentence = sentence + ['<end>']
+            wrong += 1
+        return sentence, wrong
 
         i = complete_seqs_scores.index(max(complete_seqs_scores))
         seq = complete_seqs[i]
