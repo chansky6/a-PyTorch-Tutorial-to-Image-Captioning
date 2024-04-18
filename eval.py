@@ -165,7 +165,6 @@ def evaluate(beam_size):
             sentence = [rev_word_map[seq[i].item()] for i in range(len(seq))]
             sentence = sentence + ['<end>']
             wrong += 1
-        return sentence, wrong
 
         i = complete_seqs_scores.index(max(complete_seqs_scores))
         seq = complete_seqs[i]
