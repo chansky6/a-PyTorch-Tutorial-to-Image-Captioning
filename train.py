@@ -178,7 +178,7 @@ def train(train_loader, encoder, decoder, criterion, encoder_optimizer, decoder_
         # pack_padded_sequence is an easy trick to do this
         # scores, _ = pack_padded_sequence(scores, decode_lengths, batch_first=True)
         scores = pack_padded_sequence(scores, decode_lengths, batch_first=True)
-        targets, _ = pack_padded_sequence(targets, decode_lengths, batch_first=True)
+        targets= pack_padded_sequence(targets, decode_lengths, batch_first=True)
 
         # Calculate loss
         loss = criterion(scores, targets)
