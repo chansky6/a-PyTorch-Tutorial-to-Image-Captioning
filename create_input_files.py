@@ -7,5 +7,5 @@ if __name__ == '__main__':
                        image_folder='/kaggle/input/flickr8k/Images/',
                        captions_per_image=5,
                        min_word_freq=5,
-                       output_folder='/kaggle/working/flickr8k/Images/',
+                       output_folder='/kaggle/working/',
                        max_len=50)
