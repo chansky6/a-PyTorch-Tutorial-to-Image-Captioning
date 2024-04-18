@@ -148,13 +148,14 @@ def evaluate(beam_size):
             top_k_scores = top_k_scores[incomplete_inds].unsqueeze(1)
             k_prev_words = next_word_inds[incomplete_inds].unsqueeze(1)
 
+            long_pred = False
             # Break if things have been going on too long
             if step > 50:
-                smth_wrong = True
+                long_pred = True
                 break
             step += 1
         # According to https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning/issues/18#issuecomment-441158662
-        if smth_wrong is not True:
+        if long_pred is not True:
             i = complete_seqs_scores.index(max(complete_seqs_scores))
             seq = complete_seqs[i]
             sentence = [rev_word_map[seq[i]] for i in range(len(seq))]
