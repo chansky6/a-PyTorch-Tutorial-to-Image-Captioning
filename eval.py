@@ -5,14 +5,18 @@ import torchvision.transforms as transforms
 from datasets import *
 from utils import *
 from nltk.translate.bleu_score import corpus_bleu
+from nltk.translate import meteor_score
 import torch.nn.functional as F
 from tqdm import tqdm
 
 # Parameters
-data_folder = '/kaggle/working/'  # folder with data files saved by create_input_files.py
-data_name = 'flickr8k_5_cap_per_img_5_min_word_freq'  # base name shared by data files
-checkpoint = 'BEST_checkpoint_flickr8k_5_cap_per_img_5_min_word_freq.pth.tar'  # model checkpoint
-word_map_file = '/kaggle/working/WORDMAP_flickr8k_5_cap_per_img_5_min_word_freq.json'  # word map, ensure it's the same the data was encoded with and the model was trained with
+data_folder = '../output/'  # folder with data files saved by create_input_files.py
+# data_name = 'flickr8k_5_cap_per_img_5_min_word_freq'  # base name shared by data files
+# checkpoint = 'BEST_checkpoint_convnext_flickr8k_5_cap_per_img_5_min_word_freq.pth.tar'  # model checkpoint
+# word_map_file = '../output/WORDMAP_flickr8k_5_cap_per_img_5_min_word_freq.json'  # word map, ensure it's the same the data was encoded with and the model was trained with
+data_name = 'coco_5_cap_per_img_5_min_word_freq'  # base name shared by data files
+checkpoint = 'BEST_checkpoint_coco_5_cap_per_img_5_min_word_freq.pth.tar'  # model checkpoint
+word_map_file = '../output/WORDMAP_coco_5_cap_per_img_5_min_word_freq.json'  # word map, ensure it's the same the data was encoded with and the model was trained with
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # sets device for model and PyTorch tensors
 cudnn.benchmark = True  # set to true only if inputs to model are fixed size; otherwise lot of computational overhead
 
@@ -46,7 +50,7 @@ def evaluate(beam_size):
     # DataLoader
     loader = torch.utils.data.DataLoader(
         CaptionDataset(data_folder, data_name, 'TEST', transform=transforms.Compose([normalize])),
-        batch_size=1, shuffle=True, num_workers=1, pin_memory=True)
+        batch_size=1, shuffle=True, num_workers=0, pin_memory=True)
 
     # TODO: Batched Beam Search
     # Therefore, do not use a batch_size greater than 1 - IMPORTANT!
@@ -181,12 +185,24 @@ def evaluate(beam_size):
 
         assert len(references) == len(hypotheses)
 
-    # Calculate BLEU-4 scores
-    bleu4 = corpus_bleu(references, hypotheses)
+    # Calculate BLEU scores
+    bleu1 = corpus_bleu(references, hypotheses, weights=(1, 0, 0, 0))
+    bleu2 = corpus_bleu(references, hypotheses, weights=(0.5, 0.5, 0, 0))
+    bleu3 = corpus_bleu(references, hypotheses, weights=(0.33, 0.33, 0.33, 0))
+    bleu4 = corpus_bleu(references, hypotheses, weights=(0.25, 0.25, 0.25, 0.25))
 
-    return bleu4
+    # references_str = [[str(item) for item in sublist] for sublist in references]
+    # hypotheses_str = [str(item) for item in hypotheses]
+    # meteor = meteor_score.meteor_score(references_str, hypotheses_str)
+
+    return {"bleu1": bleu1, "bleu2": bleu2, "bleu3": bleu3, "bleu4": bleu4}
 
 
 if __name__ == '__main__':
-    beam_size = 1
-    print("\nBLEU-4 score @ beam size of %d is %.4f." % (beam_size, evaluate(beam_size)))
+    beam_sizes = [1, 3, 5]
+    for beam_size in beam_sizes:
+        bleu = evaluate(beam_size)
+        print("\nBLEU-1 score @ beam size of %d is %.4f." % (beam_size, bleu["bleu1"]),
+              "\nBLEU-2 score @ beam size of %d is %.4f." % (beam_size, bleu["bleu2"]),
+              "\nBLEU-3 score @ beam size of %d is %.4f." % (beam_size, bleu["bleu3"]),
+              "\nBLEU-4 score @ beam size of %d is %.4f." % (beam_size, bleu["bleu4"]))

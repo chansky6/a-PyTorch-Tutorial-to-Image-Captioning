@@ -11,8 +11,9 @@ from utils import *
 from nltk.translate.bleu_score import corpus_bleu
 
 # Data parameters
-data_folder = '/kaggle/working/'  # folder with data files saved by create_input_files.py
+data_folder = '../output/'  # folder with data files saved by create_input_files.py
 data_name = 'flickr8k_5_cap_per_img_5_min_word_freq'  # base name shared by data files
+# data_name = 'coco_5_cap_per_img_5_min_word_freq'  # base name shared by data files
 
 # Model parameters
 emb_dim = 512  # dimension of word embeddings
@@ -24,14 +25,16 @@ cudnn.benchmark = True  # set to true only if inputs to model are fixed size; ot
 
 # Training parameters
 start_epoch = 0
-epochs = 50  # number of epochs to train for (if early stopping is not triggered)
+epochs = 40  # number of epochs to train for (if early stopping is not triggered)
 epochs_since_improvement = 0  # keeps track of number of epochs since there's been an improvement in validation BLEU
-batch_size = 32
-workers = 1  # for data-loading; right now, only 1 works with h5py
+batch_size = 64
+# workers = 1  # for data-loading; right now, only 1 works with h5py
+# for Windows
+workers = 0
 encoder_lr = 1e-4  # learning rate for encoder if fine-tuning
 decoder_lr = 4e-4  # learning rate for decoder
 grad_clip = 5.  # clip gradients at an absolute value of
-alpha_c = 1.  # regularization parameter for 'doubly stochastic attention', as in the paper
+alpha_c = 1  # regularization parameter for 'doubly stochastic attention', as in the paper
 best_bleu4 = 0.  # BLEU-4 score right now
 print_freq = 100  # print training/validation stats every __ batches
 fine_tune_encoder = False  # fine-tune encoder?
@@ -77,13 +80,12 @@ def main():
             encoder.fine_tune(fine_tune_encoder)
             encoder_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, encoder.parameters()),
                                                  lr=encoder_lr)
-
     # Move to GPU, if available
-    decoder = decoder.to(device)
     encoder = encoder.to(device)
+    decoder = decoder.to(device)
 
     # Loss function
-    criterion = nn.CrossEntropyLoss().to(device)
+    criterion = nn.CrossEntropyLoss()
 
     # Custom dataloaders
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
@@ -289,7 +291,8 @@ def validate(val_loader, encoder, decoder, criterion):
                 print('Validation: [{0}/{1}]\t'
                       'Batch Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                       'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                      'Top-5 Accuracy {top5.val:.3f} ({top5.avg:.3f})\t'.format(i, len(val_loader), batch_time=batch_time,
+                      'Top-5 Accuracy {top5.val:.3f} ({top5.avg:.3f})\t'.format(i, len(val_loader),
+                                                                                batch_time=batch_time,
                                                                                 loss=losses, top5=top5accs))
 
             # Store references (true captions), and hypothesis (prediction) for each image

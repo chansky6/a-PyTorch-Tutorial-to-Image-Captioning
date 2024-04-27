@@ -1,3 +1,5 @@
+import time
+
 import torch
 import torch.nn.functional as F
 import numpy as np
@@ -7,11 +9,13 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import skimage.transform
 import argparse
-import imageio
+import imageio.v2 as imageio
 # from scipy.misc import imread, imresize
+import os
 from PIL import Image
+# import pylab
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
 
 def caption_image_beam_search(encoder, decoder, image_path, word_map, beam_size=3):
@@ -149,7 +153,7 @@ def caption_image_beam_search(encoder, decoder, image_path, word_map, beam_size=
     return seq, alphas
 
 
-def visualize_att(image_path, seq, alphas, rev_word_map, smooth=True):
+def visualize_att(file_path, image_path, seq, alphas, rev_word_map, smooth=True):
     """
     Visualizes caption with weights at every word.
 
@@ -169,9 +173,8 @@ def visualize_att(image_path, seq, alphas, rev_word_map, smooth=True):
     for t in range(len(words)):
         if t > 50:
             break
-        plt.subplot(int(np.ceil(len(words) / 5.)), 5, t + 1)
-
-        plt.text(0, 1, '%s' % (words[t]), color='black', backgroundcolor='white', fontsize=12)
+        plt.subplot(int(np.ceil(len(words) / 12.)), 12, t + 1)
+        # plt.text(0, 1, '%s' % (words[t]), color='black', backgroundcolor='white', fontsize=12)
         plt.imshow(image)
         current_alpha = alphas[t, :]
         if smooth:
@@ -184,13 +187,21 @@ def visualize_att(image_path, seq, alphas, rev_word_map, smooth=True):
             plt.imshow(alpha, alpha=0.8)
         plt.set_cmap(cm.Greys_r)
         plt.axis('off')
-    plt.show()
+        # 在图片中下部添加文字
+        text_x = (image.size[0] - len(words[t]) * 8) / 2  # 根据文字长度动态计算位置
+        text_y = image.size[1] + 60  # 图片高度的80%位置
+        plt.text(text_x, text_y, '%s' % (words[t]), color='black', fontsize=5)
+    name = "result_" + os.path.basename(image_path).split('.')[0]
+    print(name)
+    plt.savefig(f'{file_path}/{name}.png', dpi=800, bbox_inches='tight')
+    # plt.show()
+    plt.close()
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Show, Attend, and Tell - Tutorial - Generate Caption')
 
-    parser.add_argument('--img', '-i', help='path to image')
+    parser.add_argument('--path', '-i', help='path to image')
     parser.add_argument('--model', '-m', help='path to model')
     parser.add_argument('--word_map', '-wm', help='path to word map JSON')
     parser.add_argument('--beam_size', '-b', default=5, type=int, help='beam size for beam search')
@@ -213,8 +224,14 @@ if __name__ == '__main__':
     rev_word_map = {v: k for k, v in word_map.items()}  # ix2word
 
     # Encode, decode with attention and beam search
-    seq, alphas = caption_image_beam_search(encoder, decoder, args.img, word_map, args.beam_size)
-    alphas = torch.FloatTensor(alphas)
+    files = os.listdir(args.path)
+    # 筛选出所有图片文件
+    image_files = [f for f in files if f.endswith(('jpg', 'jpeg', 'png', 'gif', 'bmp'))]
+    for image_file in image_files:
+        image_path = os.path.join(args.path, image_file)
+        print(image_path)
+        seq, alphas = caption_image_beam_search(encoder, decoder, image_path, word_map, args.beam_size)
+        alphas = torch.FloatTensor(alphas)
 
-    # Visualize caption and attention of best sequence
-    visualize_att(args.img, seq, alphas, rev_word_map, args.smooth)
+        visualize_att(args.path, image_path, seq, alphas, rev_word_map, args.smooth)
+
